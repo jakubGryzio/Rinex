@@ -3,8 +3,8 @@ from datetime import date
 
 class CalcTime:
     start_day = [2021, 3, 1, 0, 0, 0]
-    stop_day = [2021, 3, 1, 1, 00, 00]
-    interval = 60
+    stop_day = [2021, 3, 1, 23, 59, 30]
+    interval = 30
 
     def set_start_day(self, start):
         self.start_day = start
