@@ -13,8 +13,8 @@ def iono(time):
     lamr = 21
     tow = time * 3600 + 86400
 
-    el = 4.6
-    az = 330
+    el = 15
+    az = 180
 
     els = el / 180
 
