@@ -3,18 +3,16 @@ import math
 import numpy as np
 
 from Constant import Constant
+from GPS import GPS
+from hirvonen import hirvonen
 
 
-def iono(time):
+def iono(time, el, az):
     alpha = [9.3132E-09, 0.0000E+00, -5.9605E-08, 0.0000E+00]
     beta = [9.0112E+04, 0.0000E+00, -1.9661E+05, 0.0000E+00]
 
-    fir = 52
-    lamr = 21
-    tow = time * 3600 + 86400
-
-    el = 15
-    az = 180
+    fir, lamr, hr = hirvonen(GPS.x, GPS.y, GPS.z)
+    tow = time
 
     els = el / 180
 
@@ -63,7 +61,3 @@ def iono(time):
         if abs(fi_ion <= math.pi / 2) \
         else Constant.c * mf * (5 * 10 ** (-9))
     return delta_L1
-
-
-if __name__ == "__main__":
-    print(iono(7))

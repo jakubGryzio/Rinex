@@ -1,3 +1,5 @@
+# The file has been written based on code from lecturer ! #
+
 from datetime import date
 
 import numpy as np
@@ -69,7 +71,7 @@ class ReadFile:
                 types_of_obs = ['C1C']
             ind = np.zeros((len(types_header)))
             for n in range(len(types_of_obs)):
-                i = (types_header.index(types_of_obs[n])) if types_of_obs[n] in types_header else -1  # np.empty((0))
+                i = (types_header.index(types_of_obs[n])) if types_of_obs[n] in types_header else -1
                 if i > -1:
                     ind[i] = n + 1
 
@@ -81,7 +83,6 @@ class ReadFile:
                 if label == '>':
                     epoch = s2e(s, 2, 29)
                     y = epoch[0]
-                    # tt = (date.toordinal(date(epoch[0],epoch[1],epoch[2]))+366-t0)*86400+np.dot((epoch[3:6]), ([3600,60,1])) + 6*86400
                     tt = date2tow(epoch)[1] - date2tow(epoch)[2] * 86400
                     if tt > (date2tow(time_end)[1] - date2tow(epoch)[2] * 86400):
                         break
@@ -115,7 +116,11 @@ class ReadFile:
 
     @staticmethod
     def set_obs_coord_to_dest(file):
-        CalcRecvCoord.obs, CalcRecvCoord.iobs, GPS.recv_coord = ReadFile.readrnxobs(file, CalcTime.start_day, CalcTime.stop_day, 'G')
+        CalcRecvCoord.obs, CalcRecvCoord.iobs, recv_coord = ReadFile.readrnxobs(file, CalcTime.start_day, CalcTime.stop_day, 'G')
+        GPS.x = recv_coord[0]
+        GPS.y = recv_coord[1]
+        GPS.z = recv_coord[2]
+
 
 def s2e(s, p, n):
     epoch = [int(s[p:p + 4]), int(s[p + 5:p + 5 + 2]), int(s[p + 8:p + 8 + 2]), int(s[p + 11:p + 11 + 2]),

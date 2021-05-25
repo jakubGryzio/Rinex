@@ -6,6 +6,8 @@ from Constant import Constant
 from Satellite import Satellite
 from GPS import GPS
 from hirvonen import hirvonen
+from klobsns import iono
+from sastatopo import topo
 
 
 class CalcRecvCoord:
@@ -57,20 +59,19 @@ class CalcRecvCoord:
             dist = np.zeros([0, 1])
             Satellite.set_def_prop_signal()
             Satellite.set_calc_time(next_time)
-            epoch = self.getEpochSatellite(next_time)
-            observation = self.obs[
-                (np.isin(self.iobs[:, 0], self.getEpochSatellite(next_time)[:, -1])) & (self.iobs[:, 2] == next_time)]
+            epoch, elevation, azimuth = self.getEpochSatellite(next_time)
+            corrIono = [iono(next_time, elevation[i], azimuth[i]) for i in range(len(elevation))]
+            corrTopo = [topo(elevation[i]) for i in range(len(elevation))]
+            observation = self.obs[(np.isin(self.iobs[:, 0], epoch[:, -1])) & (self.iobs[:, 2] == next_time)]
             for iteration in range(5):
-                geometricalDist, y, matA, elevation, azimuth = np.zeros([0, 1]), np.zeros([0, 1]), np.zeros([0, 4]), np.zeros([0, 1]), np.zeros([0, 1])
+                geometricalDist, y, matA = np.zeros([0, 1]), np.zeros([0, 1]), np.zeros([0, 4])
                 for i, satellite in enumerate(epoch):
                     if iteration > 0:
                         Satellite.prop_signal = dist[i, 0] / Constant.c
                     XYZ = getEpochSatelliteCoord(satellite)
                     correctedXYZ = getCorrectedCoordEpochSatellite(XYZ)
-                    # elevation = np.vstack([elevation, self.getElevation(correctedXYZ)])
-                    # azimuth = np.vstack([azimuth, self.getAzimuth(correctedXYZ)])
                     geometricalDist = np.vstack([geometricalDist, self.getGeometricalDistance(correctedXYZ)])
-                    pseudoDist = self.getPseudoDistance(correctedXYZ, geometricalDist[i])
+                    pseudoDist = self.getPseudoDistance(correctedXYZ, geometricalDist[i], corrIono[i], corrTopo[i])
                     y = np.vstack([y, get_matY(pseudoDist, observation[i])])
                     matA = np.vstack([matA, self.get_matA(correctedXYZ, geometricalDist[i])])
                 matX = get_matX(matA, y)
@@ -82,14 +83,16 @@ class CalcRecvCoord:
 
     def getEpochSatellite(self, start_time):
         epoch = np.zeros([0, 38])
+        elevation = []
+        azimuth = []
         for nrSat in self.getTimeInterval(start_time)[:, 0]:
             sat = Satellite(nrSat)
-            if self.mask != 0:
-                if self.getElevation(sat.getCoordSatellite()) > self.mask:
-                    epoch = np.vstack([epoch, sat.getEpochSatelliteParameter()])
-            else:
+            elev = self.getElevation(sat.getCoordSatellite())
+            if elev > self.mask:
+                elevation.append(elev)
+                azimuth.append(self.getAzimuth(sat.getCoordSatellite()))
                 epoch = np.vstack([epoch, sat.getEpochSatelliteParameter()])
-        return epoch
+        return epoch, np.array(elevation), np.array(azimuth)
 
     def getTimeInterval(self, start_time):
         return self.iobs[self.iobs[:, 2] == start_time]
@@ -100,8 +103,8 @@ class CalcRecvCoord:
                     satellite[2] - self.RECV.get_z()) ** 2)
         return ro
 
-    def getPseudoDistance(self, satellite, dist):
-        pseudoDist = dist - Constant.c * satellite[3] + Constant.c * self.RECV.delta_tr
+    def getPseudoDistance(self, satellite, dist, corr_iono, corr_topo):
+        pseudoDist = dist - Constant.c * satellite[3] + Constant.c * self.RECV.delta_tr + corr_iono + corr_topo
         return pseudoDist
 
     def get_matA(self, satellite, dist):
@@ -149,9 +152,8 @@ def getCorrectedCoordEpochSatellite(satellite_coord):
 
 
 def get_matY(pseudo_dist, observation):
-    for i in range(len(observation)):
-        if np.isnan(observation[i]):
-            observation[i] = pseudo_dist[i]
+    ind = np.where(np.isnan(observation))
+    observation[ind] = pseudo_dist[ind]
     return pseudo_dist - observation
 
 

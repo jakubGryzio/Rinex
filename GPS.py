@@ -5,12 +5,9 @@ from Constant import Constant
 
 class GPS:
     delta_tr = 0
-    recv_coord = [0, 0, 0]
-
-    def __init__(self):
-        self.x = self.recv_coord[0]
-        self.y = self.recv_coord[1]
-        self.z = self.recv_coord[2]
+    x = 0
+    y = 0
+    z = 0
 
     def get_x(self):
         return self.x
