@@ -41,8 +41,6 @@ class CalcRecvCoord:
                     pseudoDist = np.vstack([pseudoDist, self.getPseudoDistance(correctedXYZ[i], geometricalDist[i])])
                     y = np.vstack([y, get_matY(pseudoDist[i], observation[i])])
                     matA = np.vstack([matA, self.get_matA(correctedXYZ[i], geometricalDist[i])])
-                    # elevation = np.vstack([elevation, self.getElevation(correctedXYZ[i])])
-                    # azimuth = np.vstack([azimuth, self.getAzimuth(correctedXYZ[i])])
                 matX = get_matX(matA, y)
                 self.RECV.setCoordGPS(matX)
                 recv = np.vstack([recv, self.RECV.getArrayParameter()])
@@ -51,12 +49,14 @@ class CalcRecvCoord:
         return recvCoord_per_time
 
     def getRecvCoord(self):
-        recvCoord_per_time = np.zeros([0, 4])
+        recvCoord_perTime = np.zeros([0, 4])
+        dop = np.zeros([0, 5])
         start = calcTimeOfRinex(CalcTime.start_day)
         stop = calcTimeOfRinex(CalcTime.stop_day)
         for next_time in range(start, stop + 1, CalcTime.interval):
             recv = np.zeros([0, 4])
-            dist = np.zeros([0, 1])
+            distance = np.zeros([0, 1])
+            A = np.zeros([0, 4])
             Satellite.set_def_prop_signal()
             Satellite.set_calc_time(next_time)
             epoch, elevation, azimuth = self.getEpochSatellite(next_time)
@@ -67,7 +67,7 @@ class CalcRecvCoord:
                 geometricalDist, y, matA = np.zeros([0, 1]), np.zeros([0, 1]), np.zeros([0, 4])
                 for i, satellite in enumerate(epoch):
                     if iteration > 0:
-                        Satellite.prop_signal = dist[i, 0] / Constant.c
+                        Satellite.prop_signal = distance[i, 0] / Constant.c
                     XYZ = getEpochSatelliteCoord(satellite)
                     correctedXYZ = getCorrectedCoordEpochSatellite(XYZ)
                     geometricalDist = np.vstack([geometricalDist, self.getGeometricalDistance(correctedXYZ)])
@@ -77,9 +77,12 @@ class CalcRecvCoord:
                 matX = get_matX(matA, y)
                 self.RECV.setCoordGPS(matX)
                 recv = np.vstack([recv, self.RECV.getArrayParameter()])
-                dist = geometricalDist
-            recvCoord_per_time = np.vstack([recvCoord_per_time, recv[-1]])
-        return recvCoord_per_time
+                distance = geometricalDist
+                A = matA
+            Q = get_Q(A)
+            dop = np.vstack([dop, [get_GDOP(Q), get_PDOP(Q), get_TDOP(Q), get_HDOP(Q), get_VDOP(Q)]])
+            recvCoord_perTime = np.vstack([recvCoord_perTime, recv[-1]])
+        return recvCoord_perTime, dop
 
     def getEpochSatellite(self, start_time):
         epoch = np.zeros([0, 38])
@@ -159,4 +162,38 @@ def get_matY(pseudo_dist, observation):
 
 def get_matX(A, y):
     return np.dot(np.dot(-np.linalg.inv(np.dot(np.transpose(A), A)), np.transpose(A)), y)
+
+
+def get_Q(A):
+    return np.linalg.inv(np.dot(A.T, A))
+
+
+def get_GDOP(Q):
+    return math.sqrt(Q.diagonal()[0] + Q.diagonal()[1] + Q.diagonal()[2] + Q.diagonal()[3])
+
+
+def get_PDOP(Q):
+    return math.sqrt(Q.diagonal()[0] + Q.diagonal()[1] + Q.diagonal()[2])
+
+
+def get_TDOP(Q):
+    return math.sqrt(Q.diagonal()[3])
+
+
+def get_Qneu(Q):
+    fi, lam, h = hirvonen(GPS.x, GPS.y, GPS.z)
+    R = np.array([[-math.sin(fi) * math.cos(lam), -math.sin(lam), math.cos(fi) * math.cos(lam)],
+                         [-math.sin(fi) * math.sin(lam), math.cos(lam), math.cos(fi) * math.sin(lam)],
+                         [math.cos(fi), 0, math.sin(fi)]])
+    return np.dot(np.dot(R.T, Q[0:3, 0:3]), R)
+
+
+def get_HDOP(Q):
+    Qneu = get_Qneu(Q)
+    return math.sqrt(Qneu.diagonal()[0] + Qneu.diagonal()[1])
+
+
+def get_VDOP(Q):
+    Qneu = get_Qneu(Q)
+    return math.sqrt(Qneu.diagonal()[2])
 
