@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="../static/style.css">
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rinex Computation</title>
+</head>
+<body>
+    <div class="navbar">
+      <div class="menu-item"><a href="{{ url_for("main") }}">Settings</a></div>
+      <div class="menu-item"><a href="#">Animation</a></div>
+    </div>
+
+    <div class="row">
+      <div class="main">
+          {% with messages = get_flashed_messages() %}
+            {% if messages %}
+               {% for message in messages %}
+                   <div class="alert">Alert: {{ message }}</div>
+               {% endfor %}
+            {% endif %}
+          {% endwith %}
+          <form action="{{ url_for("main") }}" method="post" enctype="multipart/form-data">
+              <div class="form">
+                  <div class="form-group>">
+                     <label for="nav"> Navigation file:  </label>
+                     <input type="file" id="nav" name="nav">
+                  </div>
+                  <div class="form-group>">
+                      <label for="obs"> Observation file: </label>
+                      <input type="file" id="obs" name="obs">
+                  </div>
+                  <div class="form-group>">
+                      <label for="date-start">Start time: </label>
+                      <input type="datetime-local" id="date-start" name="date-start" value="2021-03-01T00:00" step="30">
+                  </div>
+                  <div class="form-group>">
+                      <label for="date-stop">Stop time: </label>
+                      <input type="datetime-local" id="date-stop" name="date-stop" value="2021-03-01T03:00" step="30">
+                  </div>
+                  <div class="form-group>">
+                      <label for="mask">Mask: </label>
+                      <input type="number" id="mask" name="mask" value="10" min="0" max="90">
+                  </div>
+                  <div class="form-group>">
+                      <label for="plot">Choose a plot: </label>
+                      <select name="plot" id="plot">
+                          <option value="change-xyz"> NEU Coordinates change per time </option>
+                          <option value="change-pt-mask"> XYZ Coordinates error change for different masks </option>
+                          <option value="change-atmo"> NEU Coordinates change for different atmospheric corrections </option>
+                           <option value="change-xyz-value"> Coordinates differences histogram </option>
+                          <option value="change-dop"> DOP Parameters per time </option>
+                      </select>
+                  </div>
+                  <div class="form-group>">
+                      <a href="{{ url_for('static', filename='coords.txt') }}" download>
+                        <button type="button"><i class="fa fa-download"></i>Download GPS receiver coords</button>
+                      </a>
+                  </div>
+                  <div class="form-group>">
+                      <a href="{{ url_for('static', filename='plot.pdf') }}" download>
+                        <button type="button"><i class="fa fa-download"></i>Download plot</button>
+                      </a>
+                  </div>
+                  <div class="form-group>">
+                    <input type="submit" value="Compute coords">
+                  </div>
+              </div>
+          </form>
+      </div>
+      <div class="side">
+      </div>
+    </div>
+</body>
+</html>

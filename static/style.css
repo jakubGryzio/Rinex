@@ -1,0 +1,148 @@
+* {
+    box-sizing: border-box;
+}
+
+/* Style the body */
+body {
+    font-family: 'Roboto Condensed', sans-serif;
+    margin: 0;
+    background-color:  #f0f0f5;
+}
+/* Style the top navigation bar */
+.navbar {
+    display: flex;
+    background-color: #333;
+}
+.menu-item {
+    text-align: center;
+    flex-basis: 1vw;
+    border-right: 1px solid white;
+    color: #ccccd0;
+    flex-grow: 1;
+    padding: 10px;
+    font-size: 25px;
+}
+
+/* Style the navigation bar links */
+.menu-item a {
+    color: white;
+    padding: 5px 5px;
+    text-decoration: none;
+    text-align: center;
+}
+
+/* Change color on hover */
+.menu-item a:hover {
+    background-color: #ddd;
+    border-radius: 10%;
+    color: black;
+}
+.menu-item a.active {
+    background-color: rgba(207, 212, 212, 0.4);
+    border-radius: 10%;
+    color: #e6ecec;
+}
+
+/* Column container */
+.row {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+/* Create two unequal columns that sits next to each other */
+/* Sidebar/left column */
+.side {
+    flex: 20%;
+    background-color: #a5a3a3;
+    padding: 20px;
+    height: calc(100vh - 50px);
+}
+
+/* Main column */
+.main {
+    flex: 80%;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+.fakeimg {
+    background-color: #aaa;
+    width: 100%;
+    padding: 20px;
+}
+.form {
+    background-color: #eee9e9;
+    width: 50%;
+    min-height: 30vh;
+    margin-left: 30%;
+    margin-top: 6%;
+    border: 1px solid black;
+    border-radius: 2%;
+    padding: 8px;
+    font-size: 1.2em;
+    font-weight: bold;
+}
+.form > div {
+    margin: 20px;
+}
+.form-group {
+    display: flex;
+    flex-direction: row;
+}
+.form-group label {
+    flex: none;
+    display: block;
+}
+.input-control {
+    flex: 1 1 auto;
+    display: block;
+    margin-bottom: 5px;
+    margin-right: 8px;
+    margin-top: 2%;
+    padding: 10px;
+    height: 30px;
+}
+input[type=submit] {
+    padding: 10px 20px;
+    margin: 5px;
+    min-width: 100px;
+    width: 150px;
+    height: 40px;
+    font-weight: bold;
+    border: 1px solid black;
+    border-radius: 5%;
+    cursor: pointer;
+    background-color: #acb3c2;
+}
+button[type=button]{
+    cursor: pointer;
+    font-size: 15px;
+    padding: 5px;
+}
+.alert {
+    margin-left: 30%;
+    margin-top: 1%;
+    padding: 10px;
+    border-radius: 3%;
+    width: 50%;
+    border: 1px solid #000000;
+    background-color: #a5a3a3;
+    color: white;
+    font-size: 1.6rem;
+}
+@media (max-width: 700px) {
+    .form-group {
+        flex-direction: column;
+    }
+    .form-group .input-control {
+        margin-top: 2px;
+    }
+    .form{
+        width: 60%;
+    }
+}
+/* Responsive layout - when the screen is less than 700px wide, make the two columns stack on top of each other instead of next to each other */
+@media screen and (max-width: 700px) {
+    .row, .navbar {
+        flex-direction: column;
+    }
+}

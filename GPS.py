@@ -4,6 +4,7 @@ from Constant import Constant
 
 
 class GPS:
+    approx_coords = [0, 0, 0]
     delta_tr = 0
     x = 0
     y = 0

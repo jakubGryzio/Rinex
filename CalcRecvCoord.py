@@ -15,53 +15,27 @@ class CalcRecvCoord:
     obs, iobs = None, None
     mask = 0
 
-    def getRecvCoord_test(self):
-        recvCoord_per_time = np.zeros([0, 4])
-        test = 0
-        for next_time in range(calcTimeOfRinex(CalcTime.start_day), calcTimeOfRinex(CalcTime.stop_day) + 1,
-                               CalcTime.interval):
-            test += 1
-            recv = np.zeros([0, 4])
-            dist = np.zeros([0, 1])
-            Satellite.set_def_prop_signal()
-            Satellite.set_calc_time(next_time)
-            epoch = self.getEpochSatellite(next_time)
-            observation = self.obs[
-                (np.isin(self.iobs[:, 0], epoch[:, -1])) & (self.iobs[:, 2] == next_time)]
-            for iteration in range(5):
-                XYZ, correctedXYZ, geometricalDist, pseudoDist, y, matA, elevation, azimuth = np.zeros([0, 4]), np.zeros([0, 4]), \
-                                                                          np.zeros([0, 1]), np.zeros([0, 1]), \
-                                                                          np.zeros([0, 1]), np.zeros([0, 4]), np.zeros([0, 1]), np.zeros([0, 1])
-                for i, satellite in enumerate(epoch):
-                    if iteration > 0:
-                        Satellite.prop_signal = dist[i, 0] / Constant.c
-                    XYZ = np.vstack([XYZ, getEpochSatelliteCoord(satellite)])
-                    correctedXYZ = np.vstack([correctedXYZ, getCorrectedCoordEpochSatellite(XYZ[i])])
-                    geometricalDist = np.vstack([geometricalDist, self.getGeometricalDistance(correctedXYZ[i])])
-                    pseudoDist = np.vstack([pseudoDist, self.getPseudoDistance(correctedXYZ[i], geometricalDist[i])])
-                    y = np.vstack([y, get_matY(pseudoDist[i], observation[i])])
-                    matA = np.vstack([matA, self.get_matA(correctedXYZ[i], geometricalDist[i])])
-                matX = get_matX(matA, y)
-                self.RECV.setCoordGPS(matX)
-                recv = np.vstack([recv, self.RECV.getArrayParameter()])
-                dist = geometricalDist
-            recvCoord_per_time = np.vstack([recvCoord_per_time, recv[-1]])
-        return recvCoord_per_time
-
-    def getRecvCoord(self):
+    def getRecvCoord(self, iono_corr=True, tropo_corr=True, mask=10):
+        self.mask = mask
         recvCoord_perTime = np.zeros([0, 4])
         dop = np.zeros([0, 5])
         start = calcTimeOfRinex(CalcTime.start_day)
         stop = calcTimeOfRinex(CalcTime.stop_day)
-        for next_time in range(start, stop + 1, CalcTime.interval):
+        for next_time in range(start, stop, CalcTime.interval):
             recv = np.zeros([0, 4])
             distance = np.zeros([0, 1])
             A = np.zeros([0, 4])
             Satellite.set_def_prop_signal()
             Satellite.set_calc_time(next_time)
             epoch, elevation, azimuth = self.getEpochSatellite(next_time)
-            corrIono = [iono(next_time, elevation[i], azimuth[i]) for i in range(len(elevation))]
-            corrTopo = [topo(elevation[i]) for i in range(len(elevation))]
+            if iono_corr:
+                corrIono = [iono(next_time, elevation[i], azimuth[i]) for i in range(len(elevation))]
+            else:
+                corrIono = [0 for _i in range(len(elevation))]
+            if tropo_corr:
+                corrTropo = [topo(elevation[i]) for i in range(len(elevation))]
+            else:
+                corrTropo = [0 for _i in range(len(elevation))]
             observation = self.obs[(np.isin(self.iobs[:, 0], epoch[:, -1])) & (self.iobs[:, 2] == next_time)]
             for iteration in range(5):
                 geometricalDist, y, matA = np.zeros([0, 1]), np.zeros([0, 1]), np.zeros([0, 4])
@@ -71,7 +45,7 @@ class CalcRecvCoord:
                     XYZ = getEpochSatelliteCoord(satellite)
                     correctedXYZ = getCorrectedCoordEpochSatellite(XYZ)
                     geometricalDist = np.vstack([geometricalDist, self.getGeometricalDistance(correctedXYZ)])
-                    pseudoDist = self.getPseudoDistance(correctedXYZ, geometricalDist[i], corrIono[i], corrTopo[i])
+                    pseudoDist = self.getPseudoDistance(correctedXYZ, geometricalDist[i], corrIono[i], corrTropo[i])
                     y = np.vstack([y, get_matY(pseudoDist, observation[i])])
                     matA = np.vstack([matA, self.get_matA(correctedXYZ, geometricalDist[i])])
                 matX = get_matX(matA, y)

@@ -117,9 +117,9 @@ class ReadFile:
     @staticmethod
     def set_obs_coord_to_dest(file):
         CalcRecvCoord.obs, CalcRecvCoord.iobs, recv_coord = ReadFile.readrnxobs(file, CalcTime.start_day, CalcTime.stop_day, 'G')
-        GPS.x = recv_coord[0]
-        GPS.y = recv_coord[1]
-        GPS.z = recv_coord[2]
+        GPS.x, GPS.approx_coords[0] = recv_coord[0], recv_coord[0]
+        GPS.y, GPS.approx_coords[1] = recv_coord[1], recv_coord[1]
+        GPS.z, GPS.approx_coords[2] = recv_coord[2], recv_coord[2]
 
 
 def s2e(s, p, n):
